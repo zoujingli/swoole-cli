@@ -10,7 +10,7 @@ return function (Preprocessor $p) {
             ->withLicense('https://en.wikipedia.org/wiki/ISC_license', Library::LICENSE_SPEC)
             ->withHomePage('https://doc.libsodium.org/')
             ->withUrl('https://download.libsodium.org/libsodium/releases/libsodium-1.0.21.tar.gz')
-            ->withFileHash('md5', 'b31c901e19472bf6d2ad3178c7731bf7')
+            ->withFileHash('md5', 'ecd60ebc2c916133db2f6b3b2e9e775d')
             ->withPrefix(LIBSODIUM_PREFIX)
             ->withConfigure('./configure --prefix=' . LIBSODIUM_PREFIX . ' --enable-static --disable-shared')
             ->withPkgName('libsodium')
