@@ -31,7 +31,8 @@
 
 - **默认内存限制**：将 PHP 默认 `memory_limit` 从 `128M` 改为 `512M`（见 `main/main.c`），便于运行大型 phar 等场景。
 - **Release 权限**：各构建 job 已增加 `permissions: contents: write`，以便在 fork 中正常上传 Release 资源。
-- **Release 上传失败修复**：`make.sh archive` 产出的 tar.xz 使用 **SWOOLE_VERSION** 命名（如 `swoole-cli-v5.1.6.0-linux-x64.tar.xz`），原先 workflow 用 `php -v` 的 PHP 版本作为 APP_VERSION，导致文件名不一致、上传找不到文件。已改为 `APP_VERSION=$(./bin/swoole-cli -r "echo SWOOLE_VERSION;")`，与 make_archive 命名一致。
-- **云存储上传**：仅当 `github.repository == 'swoole/swoole-cli'` 时执行腾讯云 OSS 上传，fork 仓库会跳过该步骤。
+- **Release 上传失败修复**：`make.sh archive` / Cygwin 的 `cygwin-pack.php` 等产出的包均使用 **SWOOLE_VERSION** 命名。原先 workflow 用 `php -v` 的 PHP 版本作为 APP_VERSION，导致文件名不一致、上传找不到文件。已改为 `APP_VERSION=$(./bin/swoole-cli -r "echo SWOOLE_VERSION;")`（linux/macos/windows-cygwin 已统一）。
+- **手动触发 (workflow_dispatch)**：job 条件中 `github.event.head_commit.message` 在手动触发时可能为空，已改为 `github.event.head_commit.message || ''`，避免 job 被误跳过。
+- **云存储上传**：已从本 fork 的 workflow 中移除所有「upload to cloud object storage」步骤与 job，不再依赖腾讯云 OSS 及对应 secrets/vars。
 
 与上游同步时，注意保留上述修改或合并后重新应用。

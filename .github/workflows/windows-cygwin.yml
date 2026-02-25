@@ -4,8 +4,10 @@ on: [ push, pull_request ]
 
 jobs:
   windows-cygwin:
-    if: ${{ !contains(github.event.head_commit.message, '--filter=') || contains(github.event.head_commit.message, '[windows-cygwin]') }}
+    if: ${{ !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[windows-cygwin]') }}
     runs-on: windows-2022
+    permissions:
+      contents: write
     steps:
       - name: Show Environment Info
         shell: cmd
@@ -104,13 +106,10 @@ jobs:
           ./bin/swoole-cli -r "echo getcwd(), PHP_EOL;"
 
       - name: get app version with bash
-        # 参考 https://github.com/marketplace/actions/install-cygwin
+        # 与 cygwin-pack.php 命名一致：使用 SWOOLE_VERSION（zip 为 swoole-cli-v${SWOOLE_VERSION}-cygwin-x64.zip）
         shell: C:\cygwin\bin\bash.EXE --noprofile --norc -e -o pipefail -o igncr   {0}
-        # shell: C:\cygwin\bin\bash.EXE --login --noprofile --norc -e -o pipefail -o igncr   {0}
         run: |
-          ./bin/swoole-cli  -v | awk '{print $2}'
-
-          APP_VERSION=$(./bin/swoole-cli  -v | awk '{print $2}')
+          APP_VERSION=$(./bin/swoole-cli -r "echo SWOOLE_VERSION;")
           echo $APP_VERSION
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
 
@@ -144,25 +143,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: swoole-cli-v${{ env.APP_VERSION }}-cygwin-x64.zip
-
-  upload-to-cloud-object-storage:
-    if: 1
-    runs-on: ubuntu-latest
-    needs: windows-cygwin
-    steps:
-      - name: Prepare Run Environment
-        run:
-          sudo apt install -y curl
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - name: upload artifacts to cloud object storage
-        if: ${{ (github.repository == 'swoole/swoole-cli') && (startsWith(github.ref, 'refs/tags/'))  }}
-        env:
-          OSS_SECRET_ID: ${{ secrets.QCLOUD_OSS_SECRET_ID }}
-          OSS_SECRET_KEY: ${{ secrets.QCLOUD_OSS_SECRET_KEY }}
-          OSS_BUCKET: ${{ vars.QCLOUD_OSS_BUCKET }}
-          OSS_REGION: ${{ vars.QCLOUD_OSS_REGION }}
-        run: |
-          FILE_NAME=$(ls  -d swoole-cli-v*-cygwin-x64)
-          FILE="${{ github.workspace }}/${FILE_NAME}/${FILE_NAME}.zip"
-          bash sapi/scripts/tencent-cloud-object-storage.sh --upload-file ${FILE}

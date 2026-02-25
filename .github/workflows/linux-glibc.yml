@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   linux-glibc:
-    if: ${{ !contains(github.event.head_commit.message, '--filter=') || contains(github.event.head_commit.message, '[linux-glibc]') }}
+    if: ${{ !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[linux-glibc]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -129,22 +129,3 @@ jobs:
           ./make.sh nfpm-pkg
           ls -ls ./*.deb
           ls -ls ./*.rpm
-
-      - name: upload artifacts to cloud object storage
-        if: ${{ (github.repository == 'swoole/swoole-cli') && (startsWith(github.ref, 'refs/tags/'))  }}
-        env:
-          OSS_SECRET_ID: ${{ secrets.QCLOUD_OSS_SECRET_ID }}
-          OSS_SECRET_KEY: ${{ secrets.QCLOUD_OSS_SECRET_KEY }}
-          OSS_BUCKET: ${{ vars.QCLOUD_OSS_BUCKET }}
-          OSS_REGION: ${{ vars.QCLOUD_OSS_REGION }}
-        run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "aarch64" ]; then
-            FILE_ARCH="arm64"
-          else
-            FILE_ARCH="x64"
-          fi
-          SWOOLE_VERSION=$(awk 'NR==1{ print $1 }' "sapi/SWOOLE-VERSION.conf")
-          OS="linux"
-          bash sapi/scripts/tencent-cloud-object-storage.sh --upload-file ${{ github.workspace }}/swoole-cli-"${SWOOLE_VERSION}-${OS}-${FILE_ARCH}"-glibc.deb
-          bash sapi/scripts/tencent-cloud-object-storage.sh --upload-file ${{ github.workspace }}/swoole-cli-"${SWOOLE_VERSION}-${OS}-${FILE_ARCH}"-glibc.rpm
