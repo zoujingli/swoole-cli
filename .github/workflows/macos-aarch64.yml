@@ -8,7 +8,8 @@ on:
 
 jobs:
   macos-aarch64:
-    if: ${{ !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[macos-aarch64]') }}
+    # 无 head_commit 时（如 workflow_dispatch）或未用 --filter= 时均运行，避免“不自动触发”
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.head_commit || !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[macos-aarch64]') }}
     runs-on: macos-15
     permissions:
       contents: write

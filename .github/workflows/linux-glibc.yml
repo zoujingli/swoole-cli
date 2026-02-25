@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   linux-glibc:
-    if: ${{ !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[linux-glibc]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.head_commit || !contains(github.event.head_commit.message || '', '--filter=') || contains(github.event.head_commit.message || '', '[linux-glibc]') }}
     strategy:
       fail-fast: false
       matrix:
