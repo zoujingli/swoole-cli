@@ -14,12 +14,12 @@ mkdir -p pool/lib/
 WORK_TEMP_DIR=${__PROJECT__}/var/msys2-build/
 mkdir -p ${WORK_TEMP_DIR}
 
-VERSION=1.0.18
+VERSION=1.0.21
 
 download() {
-  # document https://doc.libsodium.org/
-
-  curl -fSLo ${__PROJECT__}/pool/lib/libsodium-${VERSION}.tar.gz https://download.libsodium.org/libsodium/releases/libsodium-${VERSION}.tar.gz
+  # download.libsodium.org 旧版已 404，改用 GitHub release
+  curl -fSLo ${__PROJECT__}/pool/lib/libsodium-${VERSION}.tar.gz \
+    "https://github.com/jedisct1/libsodium/releases/download/${VERSION}-RELEASE/libsodium-${VERSION}.tar.gz"
 }
 
 build() {
