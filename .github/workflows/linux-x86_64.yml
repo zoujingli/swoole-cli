@@ -1,11 +1,17 @@
 name: build-swoole-cli-linux-x86_64
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   linux-x86_64:
     if: ${{ !contains(github.event.head_commit.message, '--filter=') || contains(github.event.head_commit.message, '[linux-x86_64]') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Show Environment Info
@@ -144,7 +150,8 @@ jobs:
           { ldd ./bin/swoole-cli ; } || { echo $? ; } ;
           file ./bin/swoole-cli
           readelf -h ./bin/swoole-cli
-          APP_VERSION=$(./bin/swoole-cli  -v | awk '{print $2}')
+          # 与 make_archive 命名一致：使用 SWOOLE_VERSION，否则 tar.xz 文件名与 PHP 版本不一致导致 Release 上传失败
+          APP_VERSION=$(./bin/swoole-cli -r "echo SWOOLE_VERSION;")
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
           ./bin/swoole-cli -r "echo PHP_VERSION;"
           ./bin/swoole-cli ./vendor/bin/phpunit ./sapi/src/UnitTest/MainTest.php  --list-tests
@@ -163,6 +170,10 @@ jobs:
           name: swoole-cli-v${{ env.APP_VERSION }}-linux-x64
           retention-days: 90
           path: ./bin/dist/swoole-cli
+
+      - name: List archive for release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: ls -la swoole-cli-v*.tar.xz 2>/dev/null || true
 
       - name: gh release
         uses: softprops/action-gh-release@v2

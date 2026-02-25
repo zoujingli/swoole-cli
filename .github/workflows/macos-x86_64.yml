@@ -1,11 +1,17 @@
 name: build-swoole-cli-macos-x86_64
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   macos-x86_64:
     if: ${{ !contains(github.event.head_commit.message, '--filter=') || contains(github.event.head_commit.message, '[macos-x86_64]') }}
     runs-on: macos-15-intel
+    permissions:
+      contents: write
     # macos-latest (macos-14)  变更了 CPU 架构，由 x86_64 变更为 arm64
     # macos-14 CPU 架构 arm64
     # macos-13 CPU 架构 x86_64
@@ -127,7 +133,8 @@ jobs:
           ./bin/swoole-cli --ri swoole
           file ./bin/swoole-cli
           otool -L ./bin/swoole-cli
-          APP_VERSION=$(./bin/swoole-cli  -v | awk '{print $2}')
+          # 与 make_archive 命名一致：使用 SWOOLE_VERSION
+          APP_VERSION=$(./bin/swoole-cli -r "echo SWOOLE_VERSION;")
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
           ./bin/swoole-cli -r "echo PHP_VERSION;"
           ./bin/swoole-cli ./vendor/bin/phpunit ./sapi/src/UnitTest/MainTest.php  --list-tests
@@ -146,6 +153,10 @@ jobs:
           name: swoole-cli-v${{ env.APP_VERSION }}-macos-x64
           retention-days: 90
           path: ./bin/dist/swoole-cli
+
+      - name: List archive for release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: ls -la swoole-cli-v*.tar.xz 2>/dev/null || true
 
       - name: gh release
         uses: softprops/action-gh-release@v2
